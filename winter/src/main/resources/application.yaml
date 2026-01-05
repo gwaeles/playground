@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: winter
+
+client:
+  todo:
+    url: https://jsonplaceholder.typicode.com/

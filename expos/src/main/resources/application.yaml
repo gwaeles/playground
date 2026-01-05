@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: expos
+
+client:
+  todo:
+    url: https://jsonplaceholder.typicode.com/

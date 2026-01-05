@@ -1,0 +1,10 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: autumn
+
+client:
+  winter:
+    url: http://localhost:8080/api

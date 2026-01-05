@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: braves
+
+client:
+  todo:
+    url: https://jsonplaceholder.typicode.com/
