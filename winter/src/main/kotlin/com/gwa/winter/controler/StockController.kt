@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController
 import kotlin.collections.map
 
 @RestController
-@RequestMapping("/todos")
-@Tags(value = [Tag(name = "Todo")])
-class TodoController(val todoService: TodoService) {
+@RequestMapping("/stocks")
+@Tags(value = [Tag(name = "Stock")])
+class StockController(val todoService: TodoService) {
 
     companion object {
         const val WINTER_CLIENT_VERSION = "0.0.9"
@@ -23,7 +23,7 @@ class TodoController(val todoService: TodoService) {
 
     @GetMapping("/")
     fun getTodos(
-        @RequestHeader(defaultValue = WINTER_CLIENT_VERSION) version: String = WINTER_CLIENT_VERSION,
+        @RequestHeader version: String,
         @RequestHeader(value = "system-id") systemId: String
     ): ResponseEntity<List<TodoDto>> {
 

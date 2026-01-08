@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.gwa</groupId>
 	<artifactId>winter</artifactId>
-	<version>0.0.7-SNAPSHOT</version>
+	<version>0.0.14-SNAPSHOT</version>
 	<name>winter</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
@@ -33,6 +33,12 @@
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.3.0</version>
 		</dependency>
 
 		<dependency>
@@ -81,27 +87,178 @@
 					</dependency>
 				</dependencies>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.3.0</version>
-				<executions>
-					<execution>
-						<id>client-jar</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<classifier>client</classifier>
-							<includes>
-								<include>**/model/**</include>
-								<include>**/output/**</include>
-							</includes>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>generate-client</id>
+			<build>
+				<plugins>
+					<!-- Plugin Spring Boot avec configuration spéciale pour le profil -->
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<executions>
+							<!-- Étape 1: Démarrer l'application -->
+							<execution>
+								<id>start-app</id>
+								<phase>pre-integration-test</phase>
+								<goals>
+									<goal>start</goal>
+								</goals>
+								<configuration>
+									<wait>2000</wait>
+									<maxAttempts>180</maxAttempts>
+								</configuration>
+							</execution>
+							<execution>
+								<id>stop-app</id>
+								<phase>post-integration-test</phase>
+								<goals>
+									<goal>stop</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- Étape 2: Générer le fichier OpenAPI -->
+					<plugin>
+						<groupId>org.springdoc</groupId>
+						<artifactId>springdoc-openapi-maven-plugin</artifactId>
+						<version>1.4</version>
+						<executions>
+							<execution>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>generate</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<apiDocsUrl>http://localhost:8080/v3/api-docs</apiDocsUrl>
+							<outputFileName>openapi.json</outputFileName>
+							<outputDir>${project.build.directory}</outputDir>
+						</configuration>
+					</plugin>
+
+					<!-- Étape 3: Générer le code client -->
+					<plugin>
+						<groupId>org.openapitools</groupId>
+						<artifactId>openapi-generator-maven-plugin</artifactId>
+						<version>7.2.0</version>
+						<executions>
+							<execution>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>generate</goal>
+								</goals>
+								<configuration>
+									<inputSpec>${project.build.directory}/openapi.json</inputSpec>
+									<generatorName>spring</generatorName>
+									<library>spring-cloud</library>
+									<packageName>com.gwa.winter.client</packageName>
+									<apiPackage>com.gwa.winter.client.api</apiPackage>
+									<modelPackage>com.gwa.winter.client.model</modelPackage>
+									<generateApiTests>false</generateApiTests>
+									<generateModelTests>false</generateModelTests>
+									<configOptions>
+										<interfaceOnly>true</interfaceOnly>
+										<useSpringBoot3>true</useSpringBoot3>
+										<useBeanValidation>false</useBeanValidation>
+										<dateLibrary>java8</dateLibrary>
+										<openApiNullable>false</openApiNullable>
+										<useOptional>false</useOptional>
+										<serializationLibrary>jackson</serializationLibrary>
+										<skipDefaultInterface>true</skipDefaultInterface>
+										<useTags>true</useTags>
+									</configOptions>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- Étape 4: Ajouter les sources générées -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>build-helper-maven-plugin</artifactId>
+						<version>3.4.0</version>
+						<executions>
+							<execution>
+								<id>add-generated-sources</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>add-source</goal>
+								</goals>
+								<configuration>
+									<sources>
+										<source>${project.build.directory}/generated-sources/openapi/src/main/java</source>
+									</sources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- Étape 5: Compiler les sources générées -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>compile-generated-sources</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>compile</goal>
+								</goals>
+								<configuration>
+									<compileSourceRoots>
+										<compileSourceRoot>${project.build.directory}/generated-sources/openapi/src/main/java</compileSourceRoot>
+									</compileSourceRoots>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- Étape 6: Créer les jars -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<version>3.3.0</version>
+						<executions>
+							<!-- Créer un jar principal vide pour satisfaire Maven -->
+							<execution>
+								<id>empty-jar</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<classifier></classifier>
+									<includes>
+										<include>META-INF/**</include>
+									</includes>
+								</configuration>
+							</execution>
+							<!-- Créer le jar client avec le code généré -->
+							<execution>
+								<id>client-jar</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<classifier>client</classifier>
+									<includes>
+										<include>**/model/**</include>
+										<include>**/client/**</include>
+									</includes>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
