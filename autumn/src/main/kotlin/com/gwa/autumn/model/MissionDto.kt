@@ -1,11 +1,11 @@
-package com.gwa.winter.model
+package com.gwa.autumn.model
 
-import com.gwa.summer.model.Todo
+import com.gwa.winter.model.OrderLineDto
 
-data class OrderLineDto(val identifier: Long, val userIdentifier: Long, val label: String, val done: Boolean) {
+data class MissionDto(val identifier: Long, val userIdentifier: Long, val label: String, val done: Boolean) {
     companion object {
-        fun fromEntity(entity: Todo): OrderLineDto {
-            return OrderLineDto(entity.id, entity.userId, entity.title, entity.completed)
+        fun fromEntity(entity: OrderLineDto): MissionDto {
+            return MissionDto(entity.identifier, entity.userIdentifier, entity.label, entity.done)
         }
     }
 }
